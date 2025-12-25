@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react";
-import io from "socket.io-client";
+import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
-const socket = io("https://p2p-chat-backend.onrender.com");{
+const socket = io("https://p2p-chat-backend.onrender.com", {
   transports: ["websocket"],
 });
 
 function App() {
-  const [socketId, setSocketId] = useState("");
+  const [myId, setMyId] = useState("");
   const [targetId, setTargetId] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     socket.on("connect", () => {
-      setSocketId(socket.id);
+      setMyId(socket.id);
     });
 
-    socket.on("chat-message", (data) => {
+    socket.on("receive-message", (data) => {
       setMessages((prev) => [
         ...prev,
         `From ${data.from}: ${data.message}`,
@@ -25,14 +25,14 @@ function App() {
 
     return () => {
       socket.off("connect");
-      socket.off("chat-message");
+      socket.off("receive-message");
     };
   }, []);
 
   const sendMessage = () => {
-    if (!targetId || !message) return;
+    if (!message || !targetId) return;
 
-    socket.emit("chat-message", {
+    socket.emit("send-message", {
       target: targetId,
       message: message,
     });
@@ -42,45 +42,35 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "500px" }}>
+    <div style={{ padding: "20px" }}>
       <h2>P2P Chat App</h2>
 
-      <p><b>Your Socket ID:</b></p>
-      <p>{socketId}</p>
-
-      <hr />
+      <p>
+        <strong>Your Socket ID:</strong> {myId || "Connecting..."}
+      </p>
 
       <input
-        type="text"
         placeholder="Enter target Socket ID"
         value={targetId}
         onChange={(e) => setTargetId(e.target.value)}
         style={{ width: "100%", marginBottom: "10px" }}
       />
 
-      <div
-        style={{
-          border: "1px solid #ccc",
-          height: "200px",
-          padding: "10px",
-          overflowY: "auto",
-          marginBottom: "10px",
-        }}
-      >
-        {messages.map((msg, index) => (
-          <div key={index}>{msg}</div>
-        ))}
-      </div>
+      <textarea
+        rows="6"
+        style={{ width: "100%" }}
+        value={messages.join("\n")}
+        readOnly
+      />
 
       <input
-        type="text"
         placeholder="Type your message"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        style={{ width: "100%", marginBottom: "10px" }}
+        style={{ width: "100%", marginTop: "10px" }}
       />
 
-      <button onClick={sendMessage} style={{ width: "100%" }}>
+      <button onClick={sendMessage} style={{ marginTop: "10px" }}>
         Send Message
       </button>
     </div>
