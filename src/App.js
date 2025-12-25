@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("https://p2p-chat-backend.onrender.com");
+const socket = io("https://p2p-chat-backend.onrender.com");{
+  transports: ["websocket"],
+});
 
 function App() {
   const [socketId, setSocketId] = useState("");
